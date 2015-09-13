@@ -10,6 +10,7 @@ library(lubridate)
 library(dplyr)
 
 load('Rda/2.Rda')
+load('Rda/apiKey.Rda')
 
 # Functions ---------------------------------------------------------------
 
@@ -45,7 +46,6 @@ checkName <- function(movieName) {
 
 # Script ------------------------------------------------------------------
 
-apiKey <- "15ecfe62edcdb1c2b79d50c56100c220"
 getIdUrl    <- paste0('http://api.tmdb.org/3/search/movie?api_key=', apiKey, '&query=')
 getMovieUrl <- 'http://api.tmdb.org/3/movie/'
 

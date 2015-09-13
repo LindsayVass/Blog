@@ -8,6 +8,7 @@ library(jsonlite)
 library(dplyr)
 
 load('Rda/3.Rda')
+load('Rda/apiKey.Rda')
 
 # Functions ---------------------------------------------------------------
 
@@ -19,8 +20,6 @@ getPrettyJson <- function(url) {
 }
 
 # Script ------------------------------------------------------------------
-
-apiKey <- "15ecfe62edcdb1c2b79d50c56100c220"
 
 creditsList <- vector(mode = "list", length = nrow(castList))
 pb <- txtProgressBar(min = 1, max = nrow(castList), style = 3)
