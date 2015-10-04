@@ -4,6 +4,8 @@
 # This script will go through each movie in the list, determine whether each 
 # movie is a comedy, and remove movies that are not.
 
+library(httr)
+
 load('Rda/1.Rda')
 
 apiLink <- "http://en.wikipedia.org/w/api.php?action=query&prop=categories&format=json&cllimit=500&titles="

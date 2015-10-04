@@ -94,17 +94,7 @@ ggsave('Figures/Actor_Density.pdf')
 topN <- c(5, 10, 15, 20)
 plotN <- 10 # number of movies to show in plot
 for (i in 1:length(topN)) {
-  movieSummaryData <- actorSummaryData %>%
-    ungroup() %>%
-    group_by(CultClassicMovie) %>%
-    filter(n() > topN[i]) %>%
-    top_n(topN[i], MovieChange) %>% 
-    summarise(MeanMovieChange   = mean(MovieChange),
-              MedianMovieChange = median(MovieChange),
-              MinMovieChange    = min(MovieChange),
-              MaxMovieChange    = max(MovieChange)) %>%
-    arrange(desc(MeanMovieChange))
-  barP <- movieSummaryData[1:plotN, ] %>%
+ barP <- movieSummaryData[1:plotN, ] %>%
     ggplot(aes(x = reorder(CultClassicMovie, MeanMovieChange), y = MeanMovieChange)) +
     geom_bar(stat = "identity") +
     ylab("Mean Proportional Change in Movies") +
