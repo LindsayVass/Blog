@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 apiKey.Rda
+*.Rproj
+mysqlLogin.Rda
+*.mwb*
