@@ -12,6 +12,29 @@ connectToDatabase <- function() {
                   password = options()$mysql$password)
 }
 
+addUser <- function(email) {
+ 
+  db <- connectToDatabase()
+  query <- sprintf("SELECT * FROM user WHERE email = '%s'", email)
+  emailData <- dbGetQuery(db, query)
+
+  
+  if (nrow(emailData) == 0) {
+
+    query <- sprintf("INSERT INTO user (id, name, email) VALUES (%s)",
+                     paste0("NULL, NULL, '", email, "'"))
+    dbGetQuery(db, query)
+    
+    query <- sprintf("SELECT * FROM user WHERE email = '%s'", email)
+    emailData <- dbGetQuery(db, query)
+
+  }
+  
+  dbDisconnect(db)
+  
+  return(emailData)
+}
+
 getDebateList <- function() {
   db <- connectToDatabase()
   
@@ -49,6 +72,23 @@ getTopicList <- function() {
   data
 }
 
+saveData <- function(data) {
+
+  # Connect to the database
+  db <- connectToDatabase() 
+  
+  # Construct the update query by looping over the data fields
+  query <- sprintf(
+    "INSERT INTO %s (%s) VALUES ('%s')",
+    table, 
+    paste(names(data), collapse = ", "),
+    paste(data, collapse = "', '")
+  )
+  # Submit the update query and disconnect
+  dbGetQuery(db, query)
+  dbDisconnect(db)
+}
+
 # Setup app ---------------------------------------------------------------
 
 options(mysql = list(
@@ -70,6 +110,11 @@ fields <- c("debateID", "candidateID", "topicID", "rating")
 
 shinyServer(function(input, output, session) {
   
+  # When the Submit Email button is clicked, save the form data
+  observeEvent(input$submitEmail, {
+    userID <- addUser(input$email)
+  })
+  
   # Drop-down selection box for which debate
   output$chooseDebate <- renderUI({
     selectInput("debate", "Choose a debate:", 
@@ -87,7 +132,7 @@ shinyServer(function(input, output, session) {
     candidateList <- getCandidateList(debateID)
     
     # Create drop-down
-    selectizeInput("candidate", "Choose a candidate:",
+    selectInput("candidate", "Choose a candidate:",
                 choices = candidateList$name)
   })
   
@@ -110,20 +155,20 @@ shinyServer(function(input, output, session) {
     sliderInput("rating", "Rating", 1, 5, 3, ticks = FALSE)
   })
   
-#     # Whenever a field is filled, aggregate all form data
-#     formData <- reactive({
-#       debateID    <- debateList$id[which(debateList$name == input$debate)]
-#       candidateID <- candidateList$candidate_id[which(candidateList$name == input$candidate)]
-#       topicID     <- topicList$id[which(topicList$name == input$topic)]
-#       
-#       data <- sapply(fields, function(x) input[[x]])
-#       data
-#     })
-#     
-#     # When the Submit button is clicked, save the form data
-#     observeEvent(input$submit, {
-#       saveData(formData())
-#     })
+    # Whenever a field is filled, aggregate all form data
+     formData <- reactive({
+      debateID    <- debateList$id[which(debateList$name == input$debate)]
+      candidateID <- candidateList$candidate_id[which(candidateList$name == input$candidate)]
+      topicID     <- topicList$id[which(topicList$name == input$topic)]
+      
+      data <- sapply(fields, function(x) input[[x]])
+      data
+    })
+    
+    # When the Submit button is clicked, save the form data
+    observeEvent(input$submit, {
+      saveData(formData())
+    })
 #     
 #     # Show the previous result
 #     # (update with current response when Submit is clicked)

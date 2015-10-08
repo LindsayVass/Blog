@@ -1,8 +1,8 @@
  shinyUI(fluidPage(
    
-   textInput("name", "Name", ""),
-   
    textInput("email", "Email", ""),
+   
+   actionButton("submitEmail", "Submit"),
    
    tags$hr(),
    
