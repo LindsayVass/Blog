@@ -13,21 +13,21 @@ connectToDatabase <- function() {
 }
 
 addUser <- function(email) {
- 
+  
   db <- connectToDatabase()
   query <- sprintf("SELECT * FROM user WHERE email = '%s'", email)
   emailData <- dbGetQuery(db, query)
-
+  
   
   if (nrow(emailData) == 0) {
-
+    
     query <- sprintf("INSERT INTO user (id, name, email) VALUES (%s)",
                      paste0("NULL, NULL, '", email, "'"))
     dbGetQuery(db, query)
     
     query <- sprintf("SELECT * FROM user WHERE email = '%s'", email)
     emailData <- dbGetQuery(db, query)
-
+    
   }
   
   dbDisconnect(db)
@@ -73,20 +73,28 @@ getTopicList <- function() {
 }
 
 saveData <- function(data) {
-
+  
   # Connect to the database
   db <- connectToDatabase() 
   
   # Construct the update query by looping over the data fields
-  query <- sprintf(
-    "INSERT INTO %s (%s) VALUES ('%s')",
-    table, 
-    paste(names(data), collapse = ", "),
-    paste(data, collapse = "', '")
-  )
+  query <- sprintf("INSERT INTO result (id, created, rating, user_id, candidate_id, debate_id, topic_id) VALUES ('%s')",
+                   paste0("NULL', now(), '",
+                          paste(data$rating[1], 
+                         data$user_id[1], 
+                         data$candidate_id[1], 
+                         data$debate_id[1], 
+                         data$topic_id[1],
+                         sep = "', '")))
+  
   # Submit the update query and disconnect
   dbGetQuery(db, query)
   dbDisconnect(db)
+}
+
+disconnectAll <- function () {
+  all_cons <- dbListConnections(MySQL())
+  for (con in all_cons) dbDisconnect(con)
 }
 
 # Setup app ---------------------------------------------------------------
@@ -104,7 +112,7 @@ debateList <- getDebateList()
 
 topicList <- getTopicList()
 
-fields <- c("debateID", "candidateID", "topicID", "rating")
+fields <- c("rating", "user_id", "candidate_id", "debate_id", "topic_id")
 
 # Server ------------------------------------------------------------------
 
@@ -155,27 +163,33 @@ shinyServer(function(input, output, session) {
     sliderInput("rating", "Rating", 1, 5, 3, ticks = FALSE)
   })
   
-    # Whenever a field is filled, aggregate all form data
-     formData <- reactive({
-      debateID    <- debateList$id[which(debateList$name == input$debate)]
-      candidateID <- candidateList$candidate_id[which(candidateList$name == input$candidate)]
-      topicID     <- topicList$id[which(topicList$name == input$topic)]
-      
-      data <- sapply(fields, function(x) input[[x]])
-      data
-    })
-    
-    # When the Submit button is clicked, save the form data
-    observeEvent(input$submit, {
-      saveData(formData())
-    })
-#     
-#     # Show the previous result
-#     # (update with current response when Submit is clicked)
-#     output$result <- DT::renderDataTable({
-#       input$submit
-#       loadData()
-#     })     
+  # Whenever a field is filled, aggregate all form data
+  formData <- reactive({
+    debate_id    <- debateList$id[which(debateList$name == input$debate)]
+    candidate_id <- candidateList$candidate_id[which(candidateList$name == input$candidate)]
+    topic_id     <- topicList$id[which(topicList$name == input$topic)]
+    user_id     <- emailData$id
+    rating       <- input$rating
+ 
+    data <- list(rating = rating,
+                 user_id = user_id,
+                 candidate_id = candidate_id,
+                 debate_id = debate_id,
+                 topic_id = topic_id)
+    data
+  })
+  
+  # When the Submit button is clicked, save the form data
+  observeEvent(input$submit, {
+    saveData(formData())
+  })
+  #     
+  #     # Show the previous result
+  #     # (update with current response when Submit is clicked)
+  #     output$result <- DT::renderDataTable({
+  #       input$submit
+  #       loadData()
+  #     })     
 }
 )
 
