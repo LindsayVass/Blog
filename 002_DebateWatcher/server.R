@@ -92,6 +92,28 @@ saveData <- function(data) {
   dbDisconnect(db)
 }
 
+retrieveData <- function(user_id, debate_id) {
+  db <- connectToDatabase()
+  
+  # Construct the fetching query
+  query <- sprintf("SELECT * FROM result WHERE user_id = %i AND debate_id = %i", user_id, debate_id)
+  userData <- dbGetQuery(db, query)
+  
+  dbDisconnect(db)
+  
+  userData <- inner_join(userData, candidateList) %>%
+    rename(CandidateName = name)
+  userData <- inner_join(userData, debateList, by = c("debate_id" = "id")) %>%
+    rename(DebateName = name)
+  userData <- inner_join(userData, topicList, by = c("topic_id" = "id")) %>%
+    rename(TopicName = name)
+  
+  userData <- userData %>%
+    select(created, CandidateName:TopicName) %>%
+    rename(RatingTime = created)
+  
+}
+
 disconnectAll <- function () {
   all_cons <- dbListConnections(MySQL())
   for (con in all_cons) dbDisconnect(con)
@@ -182,56 +204,12 @@ shinyServer(function(input, output, session) {
   # When the Submit button is clicked, save the form data
   observeEvent(input$submit, {
     saveData(formData())
+  })   
+  
+  # When the Done Rating button is clicked, retrieve all data for this email/debate
+  observeEvent(input$doneRating, {
+    userData <- retrieveData(user_id, debate_id)
+    print(userData)
   })
-  #     
-  #     # Show the previous result
-  #     # (update with current response when Submit is clicked)
-  #     output$result <- DT::renderDataTable({
-  #       input$submit
-  #       loadData()
-  #     })     
 }
 )
-
-
-
-# library(RMySQL)
-# 
-# options(mysql = list(
-#   "host" = "127.0.0.1",
-#   "port" = 3306,
-#   "user" = "myuser",
-#   "password" = "mypassword"
-# ))
-# databaseName <- "myshinydatabase"
-# table <- "responses"
-# 
-# saveData <- function(data) {
-#   # Connect to the database
-#   db <- dbConnect(MySQL(), dbname = databaseName, host = options()$mysql$host, 
-#                   port = options()$mysql$port, user = options()$mysql$user, 
-#                   password = options()$mysql$password)
-#   # Construct the update query by looping over the data fields
-#   query <- sprintf(
-#     "INSERT INTO %s (%s) VALUES ('%s')",
-#     table, 
-#     paste(names(data), collapse = ", "),
-#     paste(data, collapse = "', '")
-#   )
-#   # Submit the update query and disconnect
-#   dbGetQuery(db, query)
-#   dbDisconnect(db)
-# }
-# 
-# loadData <- function() {
-#   # Connect to the database
-#   db <- dbConnect(MySQL(), dbname = databaseName, host = options()$mysql$host, 
-#                   port = options()$mysql$port, user = options()$mysql$user, 
-#                   password = options()$mysql$password)
-#   # Construct the fetching query
-#   query <- sprintf("SELECT * FROM %s", table)
-#   # Submit the fetch query and disconnect
-#   data <- dbGetQuery(db, query)
-#   dbDisconnect(db)
-#   data
-# }

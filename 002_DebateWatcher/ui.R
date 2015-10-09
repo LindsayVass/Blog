@@ -18,6 +18,8 @@
    
    uiOutput("chooseRating"),
    
-   actionButton("submit", "Submit")
+   actionButton("submit", "Submit"),
+   
+   actionButton("doneRating", "Done Rating")
   
 ))
