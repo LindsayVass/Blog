@@ -20,6 +20,8 @@
    
    actionButton("submit", "Submit"),
    
-   actionButton("doneRating", "Done Rating")
+   actionButton("doneRating", "View Your Results"),
+   
+   plotOutput("meanRating")
   
 ))

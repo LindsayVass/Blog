@@ -1,5 +1,8 @@
 library(RMySQL)
 library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(RColorBrewer)
 
 load('Rda/mysqlLogin.Rda')
 
@@ -109,7 +112,7 @@ retrieveData <- function(user_id, debate_id) {
     rename(TopicName = name)
   
   userData <- userData %>%
-    select(created, CandidateName:TopicName) %>%
+    select(created, rating, CandidateName:TopicName) %>%
     rename(RatingTime = created)
   
 }
@@ -135,6 +138,9 @@ debateList <- getDebateList()
 topicList <- getTopicList()
 
 fields <- c("rating", "user_id", "candidate_id", "debate_id", "topic_id")
+
+partyColors <- brewer.pal(2, "Set1")
+partyColors <- c(partyColors[2], partyColors[1])
 
 # Server ------------------------------------------------------------------
 
@@ -210,6 +216,31 @@ shinyServer(function(input, output, session) {
   observeEvent(input$doneRating, {
     userData <- retrieveData(user_id, debate_id)
     print(userData)
+    
+    # Fill in the spot we created for a plot
+    output$meanRating <- renderPlot({
+      meanData <- userData %>%
+        group_by(CandidateName, party) %>%
+        summarise(MeanRating = mean(rating)) 
+      meanData$CandidateName <- factor(meanData$CandidateName)
+      meanData <- transform(meanData, 
+                              CandidateName = reorder(CandidateName, MeanRating))
+      
+      ggplot(meanData, aes(x = CandidateName, y = MeanRating, fill = party)) +
+        geom_bar(stat = "identity") +
+        geom_text(aes(x = CandidateName, y = 0.25, label = CandidateName, hjust = 0), colour = "white", size = 8) +
+        theme_few() +
+        scale_fill_manual(values = partyColors) +
+        theme(axis.title.y = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              text = element_text(size = 24),
+              axis.title.x = element_text(vjust = -0.5)) +
+        ylab("Mean Rating") +
+        scale_y_continuous(limits = c(0, 5)) +
+        coord_flip() +
+        labs(fill = "")
+    })
   })
 }
 )
