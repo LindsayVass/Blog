@@ -84,11 +84,11 @@ saveData <- function(data) {
   query <- sprintf("INSERT INTO result (id, created, rating, user_id, candidate_id, debate_id, topic_id) VALUES ('%s')",
                    paste0("NULL', now(), '",
                           paste(data$rating[1], 
-                         data$user_id[1], 
-                         data$candidate_id[1], 
-                         data$debate_id[1], 
-                         data$topic_id[1],
-                         sep = "', '")))
+                                data$user_id[1], 
+                                data$candidate_id[1], 
+                                data$debate_id[1], 
+                                data$topic_id[1],
+                                sep = "', '")))
   
   # Submit the update query and disconnect
   dbGetQuery(db, query)
@@ -198,7 +198,7 @@ shinyServer(function(input, output, session) {
     topic_id     <- topicList$id[which(topicList$name == input$topic)]
     user_id     <- emailData$id
     rating       <- input$rating
- 
+    
     data <- list(rating = rating,
                  user_id = user_id,
                  candidate_id = candidate_id,
@@ -224,8 +224,9 @@ shinyServer(function(input, output, session) {
         summarise(MeanRating = mean(rating)) 
       meanData$CandidateName <- factor(meanData$CandidateName)
       meanData <- transform(meanData, 
-                              CandidateName = reorder(CandidateName, MeanRating))
+                            CandidateName = reorder(CandidateName, MeanRating))
       
+      # Create Plot
       ggplot(meanData, aes(x = CandidateName, y = MeanRating, fill = party)) +
         geom_bar(stat = "identity") +
         geom_text(aes(x = CandidateName, y = 0.25, label = CandidateName, hjust = 0), colour = "white", size = 8) +
@@ -241,6 +242,14 @@ shinyServer(function(input, output, session) {
         coord_flip() +
         labs(fill = "")
     })
+  
+    # Allow the user to download their data
+    output$downloadData <- downloadHandler(
+      filename = 'debate_data.csv',
+      content = function(file) {
+        write.csv(userData, file)
+      }
+    )
   })
 }
 )

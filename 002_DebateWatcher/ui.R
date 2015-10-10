@@ -22,6 +22,8 @@
    
    actionButton("doneRating", "View Your Results"),
    
-   plotOutput("meanRating")
+   plotOutput("meanRating"),
+   
+   downloadButton('downloadData', 'Download Your Data')
   
 ))
