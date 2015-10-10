@@ -104,6 +104,8 @@ retrieveData <- function(user_id, debate_id) {
   
   dbDisconnect(db)
   
+  candidateList <- getCandidateList(debate_id)
+  
   userData <- inner_join(userData, candidateList) %>%
     rename(CandidateName = name)
   userData <- inner_join(userData, debateList, by = c("debate_id" = "id")) %>%
@@ -139,16 +141,24 @@ topicList <- getTopicList()
 
 fields <- c("rating", "user_id", "candidate_id", "debate_id", "topic_id")
 
-partyColors <- brewer.pal(2, "Set1")
+partyColors <- suppressWarnings(brewer.pal(2, "Set1"))
 partyColors <- c(partyColors[2], partyColors[1])
 
 # Server ------------------------------------------------------------------
 
 shinyServer(function(input, output, session) {
   
+  # Set up list to store ID values for querying database
+  idValues <- reactiveValues(userID = NULL,
+                             debateID = NULL,
+                             candidateID = NULL,
+                             topicID = NULL,
+                             candidateList = NULL)
+  
   # When the Submit Email button is clicked, save the form data
   observeEvent(input$submitEmail, {
-    userID <- addUser(input$email)
+    userData <- addUser(input$email)
+    idValues$userID <- userData$id
   })
   
   # Drop-down selection box for which debate
@@ -163,14 +173,14 @@ shinyServer(function(input, output, session) {
     if(is.null(input$debate))
       return()
     
+    # Create drop-down
     theDebate <- input$debate
-    debateID <- debateList$id[which(debateList$name == theDebate)]
+    debateID <- debateList$id[which(debateList$name == input$debate)]
     candidateList <- getCandidateList(debateID)
     
-    # Create drop-down
     selectInput("candidate", "Choose a candidate:",
                 choices = candidateList$name)
-  })
+  }) 
   
   # Drop-down selection box with topics
   output$chooseTopic <- renderUI({
@@ -193,29 +203,29 @@ shinyServer(function(input, output, session) {
   
   # Whenever a field is filled, aggregate all form data
   formData <- reactive({
-    debate_id    <- debateList$id[which(debateList$name == input$debate)]
-    candidate_id <- candidateList$candidate_id[which(candidateList$name == input$candidate)]
-    topic_id     <- topicList$id[which(topicList$name == input$topic)]
-    user_id     <- emailData$id
-    rating       <- input$rating
-    
-    data <- list(rating = rating,
-                 user_id = user_id,
-                 candidate_id = candidate_id,
-                 debate_id = debate_id,
-                 topic_id = topic_id)
+   
+    data <- list(rating = input$rating,
+                 user_id = idValues$userID,
+                 candidate_id = idValues$candidateID,
+                 debate_id = idValues$debateID,
+                 topic_id = idValues$topicID)
     data
   })
   
   # When the Submit button is clicked, save the form data
   observeEvent(input$submit, {
+    idValues$debateID    <-debateList$id[which(debateList$name == input$debate)]
+    candidateList        <- getCandidateList(idValues$debateID)
+    idValues$candidateID <- candidateList$candidate_id[which(candidateList$name == input$candidate)]
+    idValues$topicID     <- topicList$id[which(topicList$name == input$topic)]
+    
     saveData(formData())
   })   
   
   # When the Done Rating button is clicked, retrieve all data for this email/debate
   observeEvent(input$doneRating, {
-    userData <- retrieveData(user_id, debate_id)
-    print(userData)
+    
+    userData <- retrieveData(idValues$userID, idValues$debateID)
     
     # Fill in the spot we created for a plot
     output$meanRating <- renderPlot({
@@ -229,7 +239,7 @@ shinyServer(function(input, output, session) {
       # Create Plot
       ggplot(meanData, aes(x = CandidateName, y = MeanRating, fill = party)) +
         geom_bar(stat = "identity") +
-        geom_text(aes(x = CandidateName, y = 0.25, label = CandidateName, hjust = 0), colour = "white", size = 8) +
+        geom_text(aes(x = CandidateName, y = 0.25, label = CandidateName, hjust = 0), colour = "black", size = 8) +
         theme_few() +
         scale_fill_manual(values = partyColors) +
         theme(axis.title.y = element_blank(),
@@ -238,11 +248,11 @@ shinyServer(function(input, output, session) {
               text = element_text(size = 24),
               axis.title.x = element_text(vjust = -0.5)) +
         ylab("Mean Rating") +
-        scale_y_continuous(limits = c(0, 5)) +
+        scale_y_continuous(limits = c(0, 5), breaks = c(1,2,3,4,5)) +
         coord_flip() +
         labs(fill = "")
     })
-  
+    
     # Allow the user to download their data
     output$downloadData <- downloadHandler(
       filename = 'debate_data.csv',
