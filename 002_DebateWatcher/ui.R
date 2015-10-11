@@ -2,11 +2,13 @@ shinyUI(fluidPage(
   
   titlePanel("Debate Watcher"),
   
-  textInput("email", "Email", ""),
-  
-  actionButton("submitEmail", "Submit"),
-  
-  tags$hr(),
+  conditionalPanel(
+    condition = "input.submitEmail == false",
+    textInput("email", "Email", ""),
+    
+    actionButton("submitEmail", "Submit"),
+    
+    tags$hr()),
   
   sidebarLayout(
     sidebarPanel(
