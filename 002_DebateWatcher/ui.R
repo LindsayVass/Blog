@@ -10,30 +10,32 @@ shinyUI(fluidPage(
     
     tags$hr()),
   
-  sidebarLayout(
-    sidebarPanel(
-      
-      uiOutput("chooseDebate"),
-      
-      uiOutput("chooseCandidate"),
-      
-      uiOutput("chooseTopic"),
-      
-      uiOutput("chooseRating"),
-      
-      actionButton("submit", "Submit"),
-      
-      conditionalPanel(
-        condition = "input.submit == true",
-        actionButton("doneRating", "View Your Results")
-      )
-    ),
+  conditionalPanel(
+    condition = "input.submitEmail == true",
     
-    
-    
-    mainPanel(
-      plotOutput("meanRating"),
+    sidebarLayout(
+      sidebarPanel(
+        
+        uiOutput("chooseDebate"),
+        
+        uiOutput("chooseCandidate"),
+        
+        uiOutput("chooseTopic"),
+        
+        uiOutput("chooseRating"),
+        
+        actionButton("submit", "Submit"),
+        
+        conditionalPanel(
+          condition = "input.submit == true",
+          actionButton("doneRating", "View Your Results")
+        )
+      ),
       
-      downloadButton('downloadData', 'Download Your Data')
-    ))
+      mainPanel(
+        plotOutput("meanRating"),
+        
+        downloadButton('downloadData', 'Download Your Data')
+      ))
+  )
 ))
