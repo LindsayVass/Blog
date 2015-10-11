@@ -153,7 +153,8 @@ shinyServer(function(input, output, session) {
                              debateID = NULL,
                              candidateID = NULL,
                              topicID = NULL,
-                             candidateList = NULL)
+                             candidateList = NULL,
+                             debateParty = NULL)
   
   # When the Submit Email button is clicked, save the form data
   observeEvent(input$submitEmail, {
@@ -218,6 +219,7 @@ shinyServer(function(input, output, session) {
     candidateList        <- getCandidateList(idValues$debateID)
     idValues$candidateID <- candidateList$candidate_id[which(candidateList$name == input$candidate)]
     idValues$topicID     <- topicList$id[which(topicList$name == input$topic)]
+    idValues$debateParty <- debateList$debate_party[which(debateList$name == input$debate)]
     
     saveData(formData())
   })   
@@ -225,7 +227,7 @@ shinyServer(function(input, output, session) {
   # Text describing rating
   observeEvent(input$submit, {
     output$ratingText <- renderText({ 
-      paste0("You have rated ", isolate(input$candidate), ' a ', isolate(input$rating), ' on ', isolate(input$topic), '.')   
+      paste0("You rated ", isolate(input$candidate), ' a ', isolate(input$rating), ' on ', isolate(input$topic), '.')   
     })
   })
 
@@ -233,6 +235,9 @@ shinyServer(function(input, output, session) {
 observeEvent(input$doneRating, {
   
   userData <- retrieveData(idValues$userID, idValues$debateID)
+  
+  if (is.null(userData))
+    return()
   
   # Fill in the spot we created for a plot
   output$meanRating <- renderPlot({
@@ -242,6 +247,14 @@ observeEvent(input$doneRating, {
     meanData$CandidateName <- factor(meanData$CandidateName)
     meanData <- transform(meanData, 
                           CandidateName = reorder(CandidateName, MeanRating))
+    
+    # Select color based on party
+    if (idValues$debateParty == "Democratic") {
+      partyColors <- partyColors[1]
+    } else if (idValues$debateParty == "Republican") {
+      partyColors <- partyColors[2]
+    } else {
+    }
     
     # Create Plot
     ggplot(meanData, aes(x = CandidateName, y = MeanRating, fill = party)) +
