@@ -34,8 +34,10 @@ shinyUI(fluidPage(
       
       mainPanel(
         plotOutput("meanRating"),
-        actionButton("doneRating", "View Your Results"),
-        downloadButton('downloadData', 'Download Your Data')
+        conditionalPanel(
+          condition = "output.ratingText",
+          actionButton("doneRating", "View Your Results"),
+          downloadButton('downloadData', 'Download Your Data'))
       ))
   )
 ))

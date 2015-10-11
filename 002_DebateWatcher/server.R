@@ -227,17 +227,14 @@ shinyServer(function(input, output, session) {
   # Text describing rating
   observeEvent(input$submit, {
     output$ratingText <- renderText({ 
-      paste0("You rated ", isolate(input$candidate), ' a ', isolate(input$rating), ' on ', isolate(input$topic), '.')   
-    })
+      paste0("You rated ", isolate(input$candidate), ' a ', isolate(input$rating), ' on ', isolate(input$topic), '.')
+      })
   })
 
 # When the Done Rating button is clicked, retrieve all data for this email/debate
 observeEvent(input$doneRating, {
-  
+
   userData <- retrieveData(idValues$userID, idValues$debateID)
-  
-  if (is.null(userData))
-    return()
   
   # Fill in the spot we created for a plot
   output$meanRating <- renderPlot({
@@ -266,7 +263,7 @@ observeEvent(input$doneRating, {
             axis.text.y = element_blank(),
             axis.ticks.y = element_blank(),
             text = element_text(size = 24),
-            axis.title.x = element_text(vjust = -0.5)) +
+            axis.title.x = element_text(vjust = -0.25)) +
       ylab("Mean Rating") +
       scale_y_continuous(limits = c(0, 5), breaks = c(1,2,3,4,5)) +
       coord_flip() +
