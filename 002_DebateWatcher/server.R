@@ -203,7 +203,7 @@ shinyServer(function(input, output, session) {
   
   # Whenever a field is filled, aggregate all form data
   formData <- reactive({
-   
+    
     data <- list(rating = input$rating,
                  user_id = idValues$userID,
                  candidate_id = idValues$candidateID,
@@ -222,44 +222,51 @@ shinyServer(function(input, output, session) {
     saveData(formData())
   })   
   
-  # When the Done Rating button is clicked, retrieve all data for this email/debate
-  observeEvent(input$doneRating, {
-    
-    userData <- retrieveData(idValues$userID, idValues$debateID)
-    
-    # Fill in the spot we created for a plot
-    output$meanRating <- renderPlot({
-      meanData <- userData %>%
-        group_by(CandidateName, party) %>%
-        summarise(MeanRating = mean(rating)) 
-      meanData$CandidateName <- factor(meanData$CandidateName)
-      meanData <- transform(meanData, 
-                            CandidateName = reorder(CandidateName, MeanRating))
-      
-      # Create Plot
-      ggplot(meanData, aes(x = CandidateName, y = MeanRating, fill = party)) +
-        geom_bar(stat = "identity") +
-        geom_text(aes(x = CandidateName, y = 0.25, label = CandidateName, hjust = 0), colour = "black", size = 8) +
-        theme_few() +
-        scale_fill_manual(values = partyColors) +
-        theme(axis.title.y = element_blank(),
-              axis.text.y = element_blank(),
-              axis.ticks.y = element_blank(),
-              text = element_text(size = 24),
-              axis.title.x = element_text(vjust = -0.5)) +
-        ylab("Mean Rating") +
-        scale_y_continuous(limits = c(0, 5), breaks = c(1,2,3,4,5)) +
-        coord_flip() +
-        labs(fill = "")
+  # Text describing rating
+  observeEvent(input$submit, {
+    output$ratingText <- renderText({ 
+      paste0("You have rated ", isolate(input$candidate), ' a ', isolate(input$rating), ' on ', isolate(input$topic), '.')   
     })
-    
-    # Allow the user to download their data
-    output$downloadData <- downloadHandler(
-      filename = 'debate_data.csv',
-      content = function(file) {
-        write.csv(userData, file)
-      }
-    )
   })
+
+# When the Done Rating button is clicked, retrieve all data for this email/debate
+observeEvent(input$doneRating, {
+  
+  userData <- retrieveData(idValues$userID, idValues$debateID)
+  
+  # Fill in the spot we created for a plot
+  output$meanRating <- renderPlot({
+    meanData <- userData %>%
+      group_by(CandidateName, party) %>%
+      summarise(MeanRating = mean(rating)) 
+    meanData$CandidateName <- factor(meanData$CandidateName)
+    meanData <- transform(meanData, 
+                          CandidateName = reorder(CandidateName, MeanRating))
+    
+    # Create Plot
+    ggplot(meanData, aes(x = CandidateName, y = MeanRating, fill = party)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(x = CandidateName, y = 0.25, label = CandidateName, hjust = 0), colour = "black", size = 8) +
+      theme_few() +
+      scale_fill_manual(values = partyColors) +
+      theme(axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            text = element_text(size = 24),
+            axis.title.x = element_text(vjust = -0.5)) +
+      ylab("Mean Rating") +
+      scale_y_continuous(limits = c(0, 5), breaks = c(1,2,3,4,5)) +
+      coord_flip() +
+      labs(fill = "")
+  })
+  
+  # Allow the user to download their data
+  output$downloadData <- downloadHandler(
+    filename = 'debate_data.csv',
+    content = function(file) {
+      write.csv(userData, file)
+    }
+  )
+})
 }
 )

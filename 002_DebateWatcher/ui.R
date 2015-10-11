@@ -26,6 +26,8 @@ shinyUI(fluidPage(
         
         actionButton("submit", "Submit"),
         
+       textOutput("ratingText"),
+        
         conditionalPanel(
           condition = "input.submit == true",
           actionButton("doneRating", "View Your Results")
