@@ -23,8 +23,14 @@ shinyUI(fluidPage(
       
       actionButton("submit", "Submit"),
       
-      actionButton("doneRating", "View Your Results")
+      conditionalPanel(
+        condition = "input.submit == true",
+        actionButton("doneRating", "View Your Results")
+      )
     ),
+    
+    
+    
     mainPanel(
       plotOutput("meanRating"),
       
