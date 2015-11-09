@@ -87,6 +87,17 @@ ggsave('Figures/Actor_Density.pdf')
 # Summarize and plot movie data -------------------------------------------
 
 # summarize movie data
+movieSummaryData <- actorSummaryData %>%
+  ungroup() %>%
+  group_by(CultClassicMovie) %>%
+  filter(n() > topN[i]) %>%
+  top_n(topN[i], MovieChange) %>% 
+  summarise(MeanMovieChange   = mean(MovieChange),
+            MedianMovieChange = median(MovieChange),
+            MinMovieChange    = min(MovieChange),
+            MaxMovieChange    = max(MovieChange)) %>%
+  arrange(desc(MeanMovieChange))
+
 # since WHAS has 52 listed actors, many of whom are not the actors we would 
 # think of when thinking about WHAS (e.g., many campers), we'll restrict to the 
 # top 5, 10, etc. actors and compare it with the top 5, 10, etc. actors of other
